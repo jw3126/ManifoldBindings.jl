@@ -243,6 +243,15 @@ function Base.convert(::Type{CAPI.ManifoldVec4}, v::AbstractVector)::CAPI.Manifo
     CAPI.ManifoldVec4(x1, x2, x3, x4)
 end
 
+function Base.show(io::IO, obj::Union{Manifold, MeshGL})
+    print(io, nameof(typeof(obj)))
+    if !isalive(obj)
+        print(io, "(deleted)")
+    else
+        print(io, (;num_vert=num_vert(obj), num_tri=num_tri(obj)))
+    end
+end
+
 function Base.convert(::Type{SVector{2,Cfloat}}, v::CAPI.ManifoldVec2)::SVector{2,Cfloat}
     SVector{2,Cfloat}(v.x, v.y)
 end
