@@ -1,4 +1,5 @@
 using StaticArrays
+using ArgCheck
 
 ################################################################################
 #### Manifold
@@ -6,8 +7,9 @@ using StaticArrays
 
 mutable struct Manifold
     ptr::Ptr{CAPI.ManifoldManifold}
-    function Manifold(ptr::Ptr{CAPI.ManifoldManifold})
-        m = new(ptr)
+    gchandles::Vector{Any}
+    function Manifold(ptr::Ptr{CAPI.ManifoldManifold}; gchandles = Any[])
+        m = new(ptr, gchandles)
         finalizer(delete, m)
         m
     end
@@ -27,6 +29,7 @@ end
 
 function delete(m::Manifold)
     CAPI.manifold_delete_manifold(m)
+    empty!(m.gchandles)
     m.ptr = C_NULL
 end
 
@@ -98,12 +101,13 @@ function Base.copy(m::MeshGL)::MeshGL
     MeshGL(CAPI.manifold_meshgl_copy(mem, m))
 end
 
-function MeshGL_create(vert_props::AbstractVector{Float32}, tri_verts::AbstractVector{UInt32}, n_verts)::MeshGL
+function MeshGL_create(vert_props::Vector{Float32}, tri_verts::Vector{UInt32}, n_verts)::MeshGL
     @argcheck n_verts*3 <= length(vert_props)
     mem = malloc_for(MeshGL)
-    n_props = length(vert_props)
+    n_props = Int(length(vert_props) / n_verts)
     n_tris = length(tri_verts)
-    MeshGL(CAPI.manifold_meshgl(mem, vert_props, n_verts, n_props, tri_verts, n_tris))
+    ptr = CAPI.manifold_meshgl(mem, vert_props, n_verts, n_props, tri_verts, n_tris)
+    MeshGL(ptr; gchandles = [vert_props, tri_verts])
 end
 
 function MeshGL(vertices::AbstractVector, triangles::AbstractVector)::MeshGL
@@ -124,6 +128,16 @@ function MeshGL(vertices::AbstractVector, triangles::AbstractVector)::MeshGL
         push!(tri_verts, i1-i0,i2-i0,i3-i0) # convert to zero based indexing
     end
     MeshGL_create(vert_props, tri_verts, length(vertices))
+end
+
+function Manifold(mgl::MeshGL)::Manifold
+    @argcheck isalive(mgl)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_of_meshgl(mem, mgl); gchandles = [mgl])
+end
+
+function Manifold(verts::AbstractVector, tris::AbstractVector)::Manifold
+    Manifold(MeshGL(verts, tris))
 end
 
 function num_vert(m::MeshGL)::Cint
@@ -196,4 +210,35 @@ end
 function collect_triangles(m::Manifold)::Vector{SVector{3,UInt32}}
     @argcheck isalive(m)
     collect_triangles(get_meshgl(m))
+end
+
+################################################################################
+#### ManifoldVec2
+################################################################################
+function Base.convert(::Type{CAPI.ManifoldVec2}, v::AbstractVector)::CAPI.ManifoldVec2
+    @argcheck length(v) == 2
+    x,y = v
+    CAPI.ManifoldVec2(x, y)
+end
+
+function Base.convert(::Type{CAPI.ManifoldVec3}, v::AbstractVector)::CAPI.ManifoldVec3
+    @argcheck length(v) == 3
+    x,y,z = v
+    CAPI.ManifoldVec3(x, y, z)
+end
+
+function Base.convert(::Type{CAPI.ManifoldVec4}, v::AbstractVector)::CAPI.ManifoldVec4
+    @argcheck length(v) == 4
+    x1,x2,x3,x4 = v
+    CAPI.ManifoldVec4(x1, x2, x3, x4)
+end
+
+function Base.convert(::Type{SVector{2,Cfloat}}, v::CAPI.ManifoldVec2)::SVector{2,Cfloat}
+    SVector{2,Cfloat}(v.x, v.y)
+end
+function Base.convert(::Type{SVector{3,Cfloat}}, v::CAPI.ManifoldVec3)::SVector{3,Cfloat}
+    SVector{3,Cfloat}(v.x, v.y, v.z)
+end
+function Base.convert(::Type{SVector{4,Cfloat}}, v::CAPI.ManifoldVec4)::SVector{4,Cfloat}
+    SVector{4,Cfloat}(v.x, v.y, v.z, v.w)
 end

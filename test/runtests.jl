@@ -20,11 +20,30 @@ using StaticArrays
 
     @test MB.collect_triangles(m) == MB.collect_triangles(mgl)
     tris = MB.collect_triangles(mgl)
-    @test tris == 
-    [
-     @SVector[0x00000002, 0x00000000, 0x00000001],
-     @SVector[0x00000000, 0x00000003, 0x00000001],
-     @SVector[0x00000002, 0x00000003, 0x00000000],
-     @SVector[0x00000003, 0x00000002, 0x00000001],
+    @test tris == [
+        @SVector[0x00000003, 0x00000001, 0x00000002], 
+        @SVector[0x00000001, 0x00000004, 0x00000002], 
+        @SVector[0x00000003, 0x00000004, 0x00000001], 
+        @SVector[0x00000004, 0x00000003, 0x00000002]
+       ]
+end
+
+@testset "custom tetrahedron" begin
+    vertices = [
+        @SVector[-1.0, -1.0, 1.0],
+        @SVector[-1.0, 1.0, -1.0],
+        @SVector[1.0, -1.0, -1.0],
+        @SVector[1.0, 1.0, 1.0],
     ]
+    faces = [
+        @SVector[0x00000003, 0x00000001, 0x00000002], 
+        @SVector[0x00000001, 0x00000004, 0x00000002], 
+        @SVector[0x00000003, 0x00000004, 0x00000001], 
+        @SVector[0x00000004, 0x00000003, 0x00000002]
+       ]
+
+    mgl = MB.MeshGL(vertices, faces)
+
+    @test MB.collect_triangles(mgl) == faces
+    @test MB.collect_vertices(mgl) == vertices
 end
