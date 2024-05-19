@@ -105,7 +105,7 @@ function MeshGL_create(vert_props::Vector{Float32}, tri_verts::Vector{UInt32}, n
     @argcheck n_verts*3 <= length(vert_props)
     mem = malloc_for(MeshGL)
     n_props = Int(length(vert_props) / n_verts)
-    n_tris = length(tri_verts)
+    n_tris = Int(length(tri_verts) / 3)
     ptr = CAPI.manifold_meshgl(mem, vert_props, n_verts, n_props, tri_verts, n_tris)
     MeshGL(ptr; gchandles = [vert_props, tri_verts])
 end
@@ -140,19 +140,29 @@ function Manifold(verts::AbstractVector, tris::AbstractVector)::Manifold
     Manifold(MeshGL(verts, tris))
 end
 
-function num_vert(m::MeshGL)::Cint
-    @argcheck isalive(m)
-    CAPI.manifold_meshgl_num_vert(m)
+function resolve_meshgl(mgl::MeshGL)::MeshGL
+    mgl
+end
+function resolve_meshgl(m::Manifold)::MeshGL
+    get_meshgl(m)
 end
 
-function num_tri(m::MeshGL)::Cint
+function num_vert(m::Union{MeshGL, Manifold})::Cint
     @argcheck isalive(m)
-    CAPI.manifold_meshgl_num_tri(m)
+    mgl = resolve_meshgl(m)
+    CAPI.manifold_meshgl_num_vert(mgl)
 end
 
-function num_prop(m::MeshGL)::Cint
+function num_tri(m::Union{MeshGL, Manifold})::Cint
     @argcheck isalive(m)
-    CAPI.manifold_meshgl_num_prop(m)
+    mgl = resolve_meshgl(m)
+    CAPI.manifold_meshgl_num_tri(mgl)
+end
+
+function num_prop(m::Union{MeshGL, Manifold})::Cint
+    @argcheck isalive(m)
+    mgl = resolve_meshgl(m)
+    CAPI.manifold_meshgl_num_prop(mgl)
 end
 
 function vert_properties_length(m::MeshGL)::Cint

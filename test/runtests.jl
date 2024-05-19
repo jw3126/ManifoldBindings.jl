@@ -43,7 +43,18 @@ end
        ]
 
     mgl = MB.MeshGL(vertices, faces)
-
+    @test MB.num_tri(mgl) == 4
+    @test MB.num_vert(mgl) == 4
+    @test MB.num_prop(mgl) == 3
     @test MB.collect_triangles(mgl) == faces
     @test MB.collect_vertices(mgl) == vertices
+
+    m = MB.Manifold(vertices, faces)
+
+
+    @test MB.num_tri(m) == 4
+    @test MB.num_vert(m) == 4
+    @test MB.num_prop(m) == 3
+    @test MB.collect_triangles(m) == faces
+    @test MB.collect_vertices(m) == vertices
 end
