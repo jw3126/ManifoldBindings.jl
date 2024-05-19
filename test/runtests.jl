@@ -126,3 +126,16 @@ end
     @test MB.num_tri(res) == MB.num_tri(m)
     @test MB.num_vert(res) == MB.num_vert(m)
 end
+
+@testset "error" begin
+    vertices = [
+        @SVector[1,2,3],
+        @SVector[2,2,3],
+        @SVector[3,2,3],
+       ]
+    faces = [
+        (1,2,3),
+            ]
+    mgl = MB.MeshGL(vertices, faces)
+    @test_throws MB.ManifoldException MB.Manifold(mgl)
+end

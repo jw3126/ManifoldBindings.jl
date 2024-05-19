@@ -94,6 +94,84 @@ function intersection(a::Manifold, b::Manifold)::Manifold
     Manifold(CAPI.manifold_intersection(mem, a, b))
 end
 
+function translate(m::Manifold, x::Cfloat, y::Cfloat, z::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_translate(mem, m, x, y, z))
+end
+
+function rotate(m::Manifold, x::Cfloat, y::Cfloat, z::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_rotate(mem, m, x, y, z))
+end
+
+function scale(m::Manifold, x::Cfloat, y::Cfloat, z::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_scale(mem, m, x, y, z))
+end
+
+function transform(m::Manifold, x1::Cfloat, y1::Cfloat, z1::Cfloat, x2::Cfloat, y2::Cfloat, z2::Cfloat, x3::Cfloat, y3::Cfloat, z3::Cfloat, x4::Cfloat, y4::Cfloat, z4::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_transform(mem, m, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4))
+end
+
+function mirror(m::Manifold, nx::Cfloat, ny::Cfloat, nz::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_mirror(mem, m, nx, ny, nz))
+end
+
+
+function refine(m::Manifold, level::Cint)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_refine(mem, m, level))
+end
+
+function refine_to_length(m::Manifold, length::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_refine_to_length(mem, m, length))
+end
+
+function is_empty(m::Manifold)::Bool
+    @argcheck isalive(m)
+    CAPI.manifold_is_empty(m) == 1
+end
+
+function status(m::Manifold)::CAPI.ManifoldError
+    @argcheck isalive(m)
+    CAPI.manifold_status(m)
+end
+
+function bounding_box(m::Manifold)::ManifoldBox
+    @argcheck isalive(m)
+    mem = malloc_for(ManifoldBox)
+    CAPI.manifold_bounding_box(mem, m)
+end
+
+function precision(m::Manifold)::Cfloat
+    @argcheck isalive(m)
+    CAPI.manifold_precision(m)
+end
+
+function genus(m::Manifold)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_genus(m)
+end
+
+function properties(m::Manifold)::CAPI.ManifoldProperties
+    @argcheck isalive(m)
+    CAPI.manifold_get_properties(m)
+end
+
+function original_id(m::Manifold)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_original_id(m)
+end
 
 #################################################################################
 #### MeshGL
@@ -164,10 +242,21 @@ function MeshGL(vertices::AbstractVector, triangles::AbstractVector)::MeshGL
     MeshGL_create(vert_props, tri_verts, length(vertices))
 end
 
+struct ManifoldException <: Exception
+    error::CAPI.ManifoldError
+end
+
 function Manifold(mgl::MeshGL)::Manifold
     @argcheck isalive(mgl)
     mem = malloc_for(Manifold)
-    Manifold(CAPI.manifold_of_meshgl(mem, mgl); gchandles = [mgl])
+    m = Manifold(CAPI.manifold_of_meshgl(mem, mgl); gchandles = [mgl])
+    s = status(m)
+    if s == CAPI.MANIFOLD_NO_ERROR
+        return m
+    else
+        throw(ManifoldException(s))
+        delete(m)
+    end
 end
 
 function Manifold(verts::AbstractVector, tris::AbstractVector)::Manifold
@@ -247,7 +336,7 @@ function collect_triangles(m::Manifold)::Vector{SVector{3,UInt32}}
 end
 
 ################################################################################
-#### ManifoldVec2
+#### ManifoldVec
 ################################################################################
 function Base.convert(::Type{CAPI.ManifoldVec2}, v::AbstractVector)::CAPI.ManifoldVec2
     @argcheck length(v) == 2
@@ -279,9 +368,409 @@ end
 function Base.convert(::Type{SVector{2,Cfloat}}, v::CAPI.ManifoldVec2)::SVector{2,Cfloat}
     SVector{2,Cfloat}(v.x, v.y)
 end
+
 function Base.convert(::Type{SVector{3,Cfloat}}, v::CAPI.ManifoldVec3)::SVector{3,Cfloat}
     SVector{3,Cfloat}(v.x, v.y, v.z)
 end
+
 function Base.convert(::Type{SVector{4,Cfloat}}, v::CAPI.ManifoldVec4)::SVector{4,Cfloat}
     SVector{4,Cfloat}(v.x, v.y, v.z, v.w)
+end
+
+################################################################################
+#### Manifold Properties
+################################################################################
+function surface_area(m::Manifold)::Cfloat
+    @argcheck isalive(m)
+    CAPI.manifold_get_properties(m).surface_area
+end
+
+function volume(m::Manifold)::Cfloat
+    @argcheck isalive(m)
+    CAPI.manifold_get_properties(m).volume
+end
+
+################################################################################
+#### CrossSection
+################################################################################
+mutable struct CrossSection
+    ptr::Ptr{CAPI.ManifoldCrossSection}
+    gchandles::Vector{Any}
+    function CrossSection(ptr::Ptr{CAPI.ManifoldCrossSection}; gchandles = Any[])
+        cs = new(ptr, gchandles)
+        finalizer(delete, cs)
+        cs
+    end
+end
+
+function Base.unsafe_convert(::Type{Ptr{CAPI.ManifoldCrossSection}}, cs::CrossSection)
+    cs.ptr
+end
+
+function malloc_for(::Type{CrossSection})
+    Base.Libc.malloc(CAPI.manifold_cross_section_size())
+end
+
+function delete(cs::CrossSection)
+    CAPI.manifold_delete_cross_section(cs)
+    empty!(cs.gchandles)
+    cs.ptr = C_NULL
+end
+
+function CrossSection_empty()::CrossSection
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_empty(mem))
+end
+
+function CrossSection_square(x::Cfloat, y::Cfloat, center::Cint)::CrossSection
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_square(mem, x, y, center))
+end
+
+function CrossSection_circle(radius::Cfloat, circular_segments::Cint)::CrossSection
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_circle(mem, radius, circular_segments))
+end
+
+function is_empty(cs::CrossSection)::Bool
+    @argcheck isalive(cs)
+    CAPI.manifold_cross_section_is_empty(cs) == 1
+end
+
+function area(cs::CrossSection)::Cdouble
+    @argcheck isalive(cs)
+    CAPI.manifold_cross_section_area(cs)
+end
+
+function num_vert(cs::CrossSection)::Cint
+    @argcheck isalive(cs)
+    CAPI.manifold_cross_section_num_vert(cs)
+end
+
+function num_contour(cs::CrossSection)::Cint
+    @argcheck isalive(cs)
+    CAPI.manifold_cross_section_num_contour(cs)
+end
+
+function bounds(cs::CrossSection)::ManifoldRect
+    @argcheck isalive(cs)
+    mem = malloc_for(ManifoldRect)
+    CAPI.manifold_cross_section_bounds(mem, cs)
+end
+
+function translate(cs::CrossSection, x::Cfloat, y::Cfloat)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_translate(mem, cs, x, y))
+end
+
+function rotate(cs::CrossSection, deg::Cfloat)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_rotate(mem, cs, deg))
+end
+
+function scale(cs::CrossSection, x::Cfloat, y::Cfloat)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_scale(mem, cs, x, y))
+end
+
+function mirror(cs::CrossSection, ax_x::Cfloat, ax_y::Cfloat)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_mirror(mem, cs, ax_x, ax_y))
+end
+
+function transform(cs::CrossSection, x1::Cfloat, y1::Cfloat, x2::Cfloat, y2::Cfloat, x3::Cfloat, y3::Cfloat)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_transform(mem, cs, x1, y1, x2, y2, x3, y3))
+end
+
+function warp(cs::CrossSection, fun::Ptr{Cvoid}, ctx::Ptr{Cvoid})::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_warp_context(mem, cs, fun, ctx))
+end
+
+function simplify(cs::CrossSection, epsilon::Cdouble)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_simplify(mem, cs, epsilon))
+end
+
+function offset(cs::CrossSection, delta::Cdouble, jt::CAPI.ManifoldJoinType, miter_limit::Cdouble, circular_segments::Cint)::CrossSection
+    @argcheck isalive(cs)
+    mem = malloc_for(CrossSection)
+    CrossSection(CAPI.manifold_cross_section_offset(mem, cs, delta, jt, miter_limit, circular_segments))
+end
+
+################################################################################
+#### ManifoldBox
+################################################################################
+mutable struct ManifoldBox
+    ptr::Ptr{CAPI.ManifoldBox}
+    gchandles::Vector{Any}
+    function ManifoldBox(ptr::Ptr{CAPI.ManifoldBox}; gchandles = Any[])
+        mb = new(ptr, gchandles)
+        finalizer(delete, mb)
+        mb
+    end
+end
+
+function Base.unsafe_convert(::Type{Ptr{CAPI.ManifoldBox}}, mb::ManifoldBox)
+    mb.ptr
+end
+
+function malloc_for(::Type{ManifoldBox})
+    Base.Libc.malloc(CAPI.manifold_box_size())
+end
+
+function delete(mb::ManifoldBox)
+    CAPI.manifold_delete_box(mb)
+    empty!(mb.gchandles)
+    mb.ptr = C_NULL
+end
+
+function ManifoldBox(x1::Cfloat, y1::Cfloat, z1::Cfloat, x2::Cfloat, y2::Cfloat, z2::Cfloat)::ManifoldBox
+    mem = malloc_for(ManifoldBox)
+    ManifoldBox(CAPI.manifold_box(mem, x1, y1, z1, x2, y2, z2))
+end
+
+function box_min(b::ManifoldBox)::SVector{3, Cfloat}
+    @argcheck isalive(b)
+    CAPI.manifold_box_min(b)
+end
+
+function box_max(b::ManifoldBox)::SVector{3, Cfloat}
+    @argcheck isalive(b)
+    CAPI.manifold_box_max(b)
+end
+
+function box_dimensions(b::ManifoldBox)::SVector{3, Cfloat}
+    @argcheck isalive(b)
+    CAPI.manifold_box_dimensions(b)
+end
+
+function box_center(b::ManifoldBox)::SVector{3, Cfloat}
+    @argcheck isalive(b)
+    CAPI.manifold_box_center(b)
+end
+
+function box_scale(b::ManifoldBox)::Cfloat
+    @argcheck isalive(b)
+    CAPI.manifold_box_scale(b)
+end
+
+function box_contains_pt(b::ManifoldBox, x::Cfloat, y::Cfloat, z::Cfloat)::Bool
+    @argcheck isalive(b)
+    CAPI.manifold_box_contains_pt(b, x, y, z) == 1
+end
+
+function box_contains_box(a::ManifoldBox, b::ManifoldBox)::Bool
+    @argcheck isalive(a)
+    @argcheck isalive(b)
+    CAPI.manifold_box_contains_box(a, b) == 1
+end
+
+function box_union(a::ManifoldBox, b::ManifoldBox)::ManifoldBox
+    @argcheck isalive(a)
+    @argcheck isalive(b)
+    mem = malloc_for(ManifoldBox)
+    ManifoldBox(CAPI.manifold_box_union(mem, a, b))
+end
+
+function box_transform(b::ManifoldBox, x1::Cfloat, y1::Cfloat, z1::Cfloat, x2::Cfloat, y2::Cfloat, z2::Cfloat, x3::Cfloat, y3::Cfloat, z3::Cfloat, x4::Cfloat, y4::Cfloat, z4::Cfloat)::ManifoldBox
+    @argcheck isalive(b)
+    mem = malloc_for(ManifoldBox)
+    ManifoldBox(CAPI.manifold_box_transform(mem, b, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4))
+end
+
+function box_translate(b::ManifoldBox, x::Cfloat, y::Cfloat, z::Cfloat)::ManifoldBox
+    @argcheck isalive(b)
+    mem = malloc_for(ManifoldBox)
+    ManifoldBox(CAPI.manifold_box_translate(mem, b, x, y, z))
+end
+
+function box_mul(b::ManifoldBox, x::Cfloat, y::Cfloat, z::Cfloat)::ManifoldBox
+    @argcheck isalive(b)
+    mem = malloc_for(ManifoldBox)
+    ManifoldBox(CAPI.manifold_box_mul(mem, b, x, y, z))
+end
+
+function box_does_overlap_pt(b::ManifoldBox, x::Cfloat, y::Cfloat, z::Cfloat)::Bool
+    @argcheck isalive(b)
+    CAPI.manifold_box_does_overlap_pt(b, x, y, z) == 1
+end
+
+function box_does_overlap_box(a::ManifoldBox, b::ManifoldBox)::Bool
+    @argcheck isalive(a)
+    @argcheck isalive(b)
+    CAPI.manifold_box_does_overlap_box(a, b) == 1
+end
+
+function box_is_finite(b::ManifoldBox)::Bool
+    @argcheck isalive(b)
+    CAPI.manifold_box_is_finite(b) == 1
+end
+
+################################################################################
+#### ManifoldRect
+################################################################################
+mutable struct ManifoldRect
+    ptr::Ptr{CAPI.ManifoldRect}
+    gchandles::Vector{Any}
+    function ManifoldRect(ptr::Ptr{CAPI.ManifoldRect}; gchandles = Any[])
+        mr = new(ptr, gchandles)
+        finalizer(delete, mr)
+        mr
+    end
+end
+
+function Base.unsafe_convert(::Type{Ptr{CAPI.ManifoldRect}}, mr::ManifoldRect)
+    mr.ptr
+end
+
+function malloc_for(::Type{ManifoldRect})
+    Base.Libc.malloc(CAPI.manifold_rect_size())
+end
+
+function delete(mr::ManifoldRect)
+    CAPI.manifold_delete_rect(mr)
+    empty!(mr.gchandles)
+    mr.ptr = C_NULL
+end
+
+function ManifoldRect(x1::Cfloat, y1::Cfloat, x2::Cfloat, y2::Cfloat)::ManifoldRect
+    mem = malloc_for(ManifoldRect)
+    ManifoldRect(CAPI.manifold_rect(mem, x1, y1, x2, y2))
+end
+
+function rect_min(r::ManifoldRect)::SVector{2, Cfloat}
+    @argcheck isalive(r)
+    CAPI.manifold_rect_min(r)
+end
+
+function rect_max(r::ManifoldRect)::SVector{2, Cfloat}
+    @argcheck isalive(r)
+    CAPI.manifold_rect_max(r)
+end
+
+function rect_dimensions(r::ManifoldRect)::SVector{2, Cfloat}
+    @argcheck isalive(r)
+    CAPI.manifold_rect_dimensions(r)
+end
+
+function rect_center(r::ManifoldRect)::SVector{2, Cfloat}
+    @argcheck isalive(r)
+    CAPI.manifold_rect_center(r)
+end
+
+function rect_scale(r::ManifoldRect)::Cfloat
+    @argcheck isalive(r)
+    CAPI.manifold_rect_scale(r)
+end
+
+function rect_contains_pt(r::ManifoldRect, x::Cfloat, y::Cfloat)::Bool
+    @argcheck isalive(r)
+    CAPI.manifold_rect_contains_pt(r, x, y) == 1
+end
+
+function rect_contains_rect(a::ManifoldRect, b::ManifoldRect)::Bool
+    @argcheck isalive(a)
+    @argcheck isalive(b)
+    CAPI.manifold_rect_contains_rect(a, b) == 1
+end
+
+function rect_include_pt(r::ManifoldRect, x::Cfloat, y::Cfloat)
+    @argcheck isalive(r)
+    CAPI.manifold_rect_include_pt(r, x, y)
+end
+
+function rect_union(a::ManifoldRect, b::ManifoldRect)::ManifoldRect
+    @argcheck isalive(a)
+    @argcheck isalive(b)
+    mem = malloc_for(ManifoldRect)
+    ManifoldRect(CAPI.manifold_rect_union(mem, a, b))
+end
+
+function rect_transform(r::ManifoldRect, x1::Cfloat, y1::Cfloat, x2::Cfloat, y2::Cfloat, x3::Cfloat, y3::Cfloat)::ManifoldRect
+    @argcheck isalive(r)
+    mem = malloc_for(ManifoldRect)
+    ManifoldRect(CAPI.manifold_rect_transform(mem, r, x1, y1, x2, y2, x3, y3))
+end
+
+function rect_translate(r::ManifoldRect, x::Cfloat, y::Cfloat)::ManifoldRect
+    @argcheck isalive(r)
+    mem = malloc_for(ManifoldRect)
+    ManifoldRect(CAPI.manifold_rect_translate(mem, r, x, y))
+end
+
+function rect_mul(r::ManifoldRect, x::Cfloat, y::Cfloat)::ManifoldRect
+    @argcheck isalive(r)
+    mem = malloc_for(ManifoldRect)
+    ManifoldRect(CAPI.manifold_rect_mul(mem, r, x, y))
+end
+
+function rect_does_overlap_rect(a::ManifoldRect, r::ManifoldRect)::Bool
+    @argcheck isalive(a)
+    @argcheck isalive(r)
+    CAPI.manifold_rect_does_overlap_rect(a, r) == 1
+end
+
+function rect_is_empty(r::ManifoldRect)::Bool
+    @argcheck isalive(r)
+    CAPI.manifold_rect_is_empty(r) == 1
+end
+
+function rect_is_finite(r::ManifoldRect)::Bool
+    @argcheck isalive(r)
+    CAPI.manifold_rect_is_finite(r) == 1
+end
+
+################################################################################
+#### Utilities
+################################################################################
+function set_min_circular_angle(degrees::Cfloat)
+    CAPI.manifold_set_min_circular_angle(degrees)
+end
+
+function set_min_circular_edge_length(length::Cfloat)
+    CAPI.manifold_set_min_circular_edge_length(length)
+end
+
+function set_circular_segments(number::Cint)
+    CAPI.manifold_set_circular_segments(number)
+end
+
+function get_circular_segments(radius::Cfloat)::Cint
+    CAPI.manifold_get_circular_segments(radius)
+end
+
+################################################################################
+#### High-level Functions
+################################################################################
+function smooth_by_normals(mem, m::Manifold, normalIdx::Cint)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_smooth_by_normals(mem, m, normalIdx))
+end
+
+function smooth_out(mem, m::Manifold, minSharpAngle::Cfloat, minSmoothness::Cfloat)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_smooth_out(mem, m, minSharpAngle, minSmoothness))
+end
+
+function calculate_curvature(mem, m::Manifold, gaussian_idx::Cint, mean_idx::Cint)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_calculate_curvature(mem, m, gaussian_idx, mean_idx))
+end
+
+function calculate_normals(mem, m::Manifold, normal_idx::Cint, min_sharp_angle::Cint)::Manifold
+    @argcheck isalive(m)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_calculate_normals(mem, m, normal_idx, min_sharp_angle))
 end
