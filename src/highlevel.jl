@@ -135,6 +135,8 @@ function tri_verts!(out::Vector{UInt32}, m::MeshGL)::typeof(out)
     @argcheck isalive(m)
     resize!(out, num_vert(m)*3)
     CAPI.manifold_meshgl_tri_verts(out, m)
+    # convert to 1 based indexing
+    out .+= one(UInt32)
     out
 end
 
