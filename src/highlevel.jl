@@ -53,6 +53,21 @@ function Manifold_tetrahedron()::Manifold
     Manifold(CAPI.manifold_tetrahedron(mem))
 end
 
+function Manifold_cube(x, y, z, center::Bool)::Manifold
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_cube(mem, x, y, z, center))
+end
+
+function Manifold_cylinder(height, radius_low, radius_high, circular_segments, center)::Manifold
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_cylinder(mem, height, radius_low, radius_high, circular_segments, center))
+end
+
+function Manifold_sphere(radius, circular_segments)::Manifold
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_sphere(mem, radius, circular_segments))
+end
+
 function union(a::Manifold, b::Manifold)::Manifold
     @argcheck isalive(a)
     @argcheck isalive(b)
@@ -181,7 +196,7 @@ end
 
 function tri_verts!(out::Vector{UInt32}, m::MeshGL)::typeof(out)
     @argcheck isalive(m)
-    resize!(out, num_vert(m)*3)
+    resize!(out, tri_length(m))
     CAPI.manifold_meshgl_tri_verts(out, m)
     # convert to 1 based indexing
     out .+= one(UInt32)

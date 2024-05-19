@@ -67,6 +67,39 @@ end
     @test !MB.isalive(m)
 end
 
+@testset "cube" begin
+    center=true
+    m = MB.Manifold_cube(1,2,3, center)
+    @test MB.num_tri(m) == 12
+    @test MB.num_vert(m) == 8
+    @test MB.collect_vertices(m) == [
+     @SVector[-0.5 , -1.0 , -1.5 ],
+     @SVector[-0.5 , -1.0 , 1.5  ],
+     @SVector[-0.5 , 1.0  , -1.5 ],
+     @SVector[-0.5 , 1.0  , 1.5  ],
+     @SVector[0.5  , -1.0 , -1.5 ],
+     @SVector[0.5  , -1.0 , 1.5  ],
+     @SVector[0.5  , 1.0  , -1.5 ],
+     @SVector[0.5  , 1.0  , 1.5  ],
+    ]
+    @test length(MB.collect_vertices(m)) == 8
+    @test length(MB.collect_triangles(m)) == 12
+    @test MB.collect_triangles(m) == [
+     @SVector[0x00000002, 0x00000001, 0x00000005],
+     @SVector[0x00000003, 0x00000005, 0x00000001],
+     @SVector[0x00000002, 0x00000004, 0x00000001],
+     @SVector[0x00000004, 0x00000002, 0x00000006],
+     @SVector[0x00000004, 0x00000003, 0x00000001],
+     @SVector[0x00000004, 0x00000008, 0x00000003],
+     @SVector[0x00000006, 0x00000005, 0x00000007],
+     @SVector[0x00000006, 0x00000002, 0x00000005],
+     @SVector[0x00000007, 0x00000005, 0x00000003],
+     @SVector[0x00000008, 0x00000007, 0x00000003],
+     @SVector[0x00000008, 0x00000004, 0x00000006],
+     @SVector[0x00000008, 0x00000006, 0x00000007],
+    ]
+end
+
 @testset "booleans" begin
     m = MB.Manifold_tetrahedron()
     res = MB.difference(m, m)
