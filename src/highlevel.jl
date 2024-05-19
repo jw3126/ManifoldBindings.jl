@@ -57,21 +57,21 @@ function union(a::Manifold, b::Manifold)::Manifold
     @argcheck isalive(a)
     @argcheck isalive(b)
     mem = malloc_for(Manifold)
-    CAPI.manifold_union(mem, a, b)
+    Manifold(CAPI.manifold_union(mem, a, b))
 end
 
 function difference(a::Manifold, b::Manifold)::Manifold
     @argcheck isalive(a)
     @argcheck isalive(b)
     mem = malloc_for(Manifold)
-    CAPI.manifold_difference(mem, a, b)
+    Manifold(CAPI.manifold_difference(mem, a, b))
 end
 
 function intersection(a::Manifold, b::Manifold)::Manifold
     @argcheck isalive(a)
     @argcheck isalive(b)
     mem = malloc_for(Manifold)
-    CAPI.manifold_intersection(mem, a, b)
+    Manifold(CAPI.manifold_intersection(mem, a, b))
 end
 
 

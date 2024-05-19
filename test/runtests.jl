@@ -66,3 +66,18 @@ end
     MB.delete(m) # multi delete is fine
     @test !MB.isalive(m)
 end
+
+@testset "booleans" begin
+    m = MB.Manifold_tetrahedron()
+    res = MB.difference(m, m)
+    @test MB.num_tri(res) == 0
+    @test MB.num_vert(res) == 0
+
+    res = MB.intersection(m, m)
+    @test MB.num_tri(res) == MB.num_tri(m)
+    @test MB.num_vert(res) == MB.num_vert(m)
+
+    res = MB.union(m, m)
+    @test MB.num_tri(res) == MB.num_tri(m)
+    @test MB.num_vert(res) == MB.num_vert(m)
+end
