@@ -32,11 +32,6 @@ function num_tri(m::Manifold)::Cint
     CAPI.manifold_num_tri(m)
 end
 
-function num_prop(m::Manifold)::Cint
-    @argcheck isalive(m)
-    CAPI.manifold_num_prop(m)
-end
-
 function num_edge(m::Manifold)::Cint
     @argcheck isalive(m)
     CAPI.manifold_num_edge(m)
