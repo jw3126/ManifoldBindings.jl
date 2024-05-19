@@ -5,7 +5,6 @@ using StaticArrays
 
 @testset "tetrahedron" begin
     m = MB.Manifold_tetrahedron()
-    # MB.manifold_delete_manifold(m)
     mgl = MB.get_meshgl(m)
     @test MB.num_tri(mgl) == 4
     @test MB.num_vert(mgl) == 4
