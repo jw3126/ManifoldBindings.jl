@@ -94,19 +94,19 @@ function intersection(a::Manifold, b::Manifold)::Manifold
     Manifold(CAPI.manifold_intersection(mem, a, b))
 end
 
-function translate(m::Manifold, x::Cfloat, y::Cfloat, z::Cfloat)::Manifold
+function translate(m::Manifold, x::Real, y::Real, z::Real)::Manifold
     @argcheck isalive(m)
     mem = malloc_for(Manifold)
     Manifold(CAPI.manifold_translate(mem, m, x, y, z))
 end
 
-function rotate(m::Manifold, x::Cfloat, y::Cfloat, z::Cfloat)::Manifold
+function rotate(m::Manifold, x::Real, y::Real, z::Real)::Manifold
     @argcheck isalive(m)
     mem = malloc_for(Manifold)
     Manifold(CAPI.manifold_rotate(mem, m, x, y, z))
 end
 
-function scale(m::Manifold, x::Cfloat, y::Cfloat, z::Cfloat)::Manifold
+function scale(m::Manifold, x::Real, y::Real, z::Real)::Manifold
     @argcheck isalive(m)
     mem = malloc_for(Manifold)
     Manifold(CAPI.manifold_scale(mem, m, x, y, z))
@@ -391,116 +391,6 @@ function volume(m::Manifold)::Cfloat
 end
 
 ################################################################################
-#### CrossSection
-################################################################################
-mutable struct CrossSection
-    ptr::Ptr{CAPI.ManifoldCrossSection}
-    gchandles::Vector{Any}
-    function CrossSection(ptr::Ptr{CAPI.ManifoldCrossSection}; gchandles = Any[])
-        cs = new(ptr, gchandles)
-        finalizer(delete, cs)
-        cs
-    end
-end
-
-function Base.unsafe_convert(::Type{Ptr{CAPI.ManifoldCrossSection}}, cs::CrossSection)
-    cs.ptr
-end
-
-function malloc_for(::Type{CrossSection})
-    Base.Libc.malloc(CAPI.manifold_cross_section_size())
-end
-
-function delete(cs::CrossSection)
-    CAPI.manifold_delete_cross_section(cs)
-    empty!(cs.gchandles)
-    cs.ptr = C_NULL
-end
-
-function CrossSection_empty()::CrossSection
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_empty(mem))
-end
-
-function CrossSection_square(x::Cfloat, y::Cfloat, center::Cint)::CrossSection
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_square(mem, x, y, center))
-end
-
-function CrossSection_circle(radius::Cfloat, circular_segments::Cint)::CrossSection
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_circle(mem, radius, circular_segments))
-end
-
-function is_empty(cs::CrossSection)::Bool
-    @argcheck isalive(cs)
-    CAPI.manifold_cross_section_is_empty(cs) == 1
-end
-
-function area(cs::CrossSection)::Cdouble
-    @argcheck isalive(cs)
-    CAPI.manifold_cross_section_area(cs)
-end
-
-function num_vert(cs::CrossSection)::Cint
-    @argcheck isalive(cs)
-    CAPI.manifold_cross_section_num_vert(cs)
-end
-
-function num_contour(cs::CrossSection)::Cint
-    @argcheck isalive(cs)
-    CAPI.manifold_cross_section_num_contour(cs)
-end
-
-function bounds(cs::CrossSection)::ManifoldRect
-    @argcheck isalive(cs)
-    mem = malloc_for(ManifoldRect)
-    CAPI.manifold_cross_section_bounds(mem, cs)
-end
-
-function translate(cs::CrossSection, x::Cfloat, y::Cfloat)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_translate(mem, cs, x, y))
-end
-
-function rotate(cs::CrossSection, deg::Cfloat)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_rotate(mem, cs, deg))
-end
-
-function scale(cs::CrossSection, x::Cfloat, y::Cfloat)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_scale(mem, cs, x, y))
-end
-
-function mirror(cs::CrossSection, ax_x::Cfloat, ax_y::Cfloat)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_mirror(mem, cs, ax_x, ax_y))
-end
-
-function transform(cs::CrossSection, x1::Cfloat, y1::Cfloat, x2::Cfloat, y2::Cfloat, x3::Cfloat, y3::Cfloat)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_transform(mem, cs, x1, y1, x2, y2, x3, y3))
-end
-
-function simplify(cs::CrossSection, epsilon::Cdouble)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_simplify(mem, cs, epsilon))
-end
-
-function offset(cs::CrossSection, delta::Cdouble, jt::CAPI.ManifoldJoinType, miter_limit::Cdouble, circular_segments::Cint)::CrossSection
-    @argcheck isalive(cs)
-    mem = malloc_for(CrossSection)
-    CrossSection(CAPI.manifold_cross_section_offset(mem, cs, delta, jt, miter_limit, circular_segments))
-end
-
-################################################################################
 #### Box
 ################################################################################
 mutable struct Box
@@ -611,137 +501,4 @@ end
 function box_is_finite(b::Box)::Bool
     @argcheck isalive(b)
     CAPI.manifold_box_is_finite(b) == 1
-end
-
-################################################################################
-#### ManifoldRect
-################################################################################
-mutable struct ManifoldRect
-    ptr::Ptr{CAPI.ManifoldRect}
-    gchandles::Vector{Any}
-    function ManifoldRect(ptr::Ptr{CAPI.ManifoldRect}; gchandles = Any[])
-        mr = new(ptr, gchandles)
-        finalizer(delete, mr)
-        mr
-    end
-end
-
-function Base.unsafe_convert(::Type{Ptr{CAPI.ManifoldRect}}, mr::ManifoldRect)
-    mr.ptr
-end
-
-function malloc_for(::Type{ManifoldRect})
-    Base.Libc.malloc(CAPI.manifold_rect_size())
-end
-
-function delete(mr::ManifoldRect)
-    CAPI.manifold_delete_rect(mr)
-    empty!(mr.gchandles)
-    mr.ptr = C_NULL
-end
-
-function ManifoldRect(x1::Cfloat, y1::Cfloat, x2::Cfloat, y2::Cfloat)::ManifoldRect
-    mem = malloc_for(ManifoldRect)
-    ManifoldRect(CAPI.manifold_rect(mem, x1, y1, x2, y2))
-end
-
-function rect_min(r::ManifoldRect)::SVector{2, Cfloat}
-    @argcheck isalive(r)
-    CAPI.manifold_rect_min(r)
-end
-
-function rect_max(r::ManifoldRect)::SVector{2, Cfloat}
-    @argcheck isalive(r)
-    CAPI.manifold_rect_max(r)
-end
-
-function rect_dimensions(r::ManifoldRect)::SVector{2, Cfloat}
-    @argcheck isalive(r)
-    CAPI.manifold_rect_dimensions(r)
-end
-
-function rect_center(r::ManifoldRect)::SVector{2, Cfloat}
-    @argcheck isalive(r)
-    CAPI.manifold_rect_center(r)
-end
-
-function rect_scale(r::ManifoldRect)::Cfloat
-    @argcheck isalive(r)
-    CAPI.manifold_rect_scale(r)
-end
-
-function rect_contains_pt(r::ManifoldRect, x::Cfloat, y::Cfloat)::Bool
-    @argcheck isalive(r)
-    CAPI.manifold_rect_contains_pt(r, x, y) == 1
-end
-
-function rect_contains_rect(a::ManifoldRect, b::ManifoldRect)::Bool
-    @argcheck isalive(a)
-    @argcheck isalive(b)
-    CAPI.manifold_rect_contains_rect(a, b) == 1
-end
-
-function rect_include_pt(r::ManifoldRect, x::Cfloat, y::Cfloat)
-    @argcheck isalive(r)
-    CAPI.manifold_rect_include_pt(r, x, y)
-end
-
-function rect_union(a::ManifoldRect, b::ManifoldRect)::ManifoldRect
-    @argcheck isalive(a)
-    @argcheck isalive(b)
-    mem = malloc_for(ManifoldRect)
-    ManifoldRect(CAPI.manifold_rect_union(mem, a, b))
-end
-
-function rect_transform(r::ManifoldRect, x1::Cfloat, y1::Cfloat, x2::Cfloat, y2::Cfloat, x3::Cfloat, y3::Cfloat)::ManifoldRect
-    @argcheck isalive(r)
-    mem = malloc_for(ManifoldRect)
-    ManifoldRect(CAPI.manifold_rect_transform(mem, r, x1, y1, x2, y2, x3, y3))
-end
-
-function rect_translate(r::ManifoldRect, x::Cfloat, y::Cfloat)::ManifoldRect
-    @argcheck isalive(r)
-    mem = malloc_for(ManifoldRect)
-    ManifoldRect(CAPI.manifold_rect_translate(mem, r, x, y))
-end
-
-function rect_mul(r::ManifoldRect, x::Cfloat, y::Cfloat)::ManifoldRect
-    @argcheck isalive(r)
-    mem = malloc_for(ManifoldRect)
-    ManifoldRect(CAPI.manifold_rect_mul(mem, r, x, y))
-end
-
-function rect_does_overlap_rect(a::ManifoldRect, r::ManifoldRect)::Bool
-    @argcheck isalive(a)
-    @argcheck isalive(r)
-    CAPI.manifold_rect_does_overlap_rect(a, r) == 1
-end
-
-function is_empty(r::ManifoldRect)::Bool
-    @argcheck isalive(r)
-    CAPI.manifold_rect_is_empty(r) == 1
-end
-
-function rect_is_finite(r::ManifoldRect)::Bool
-    @argcheck isalive(r)
-    CAPI.manifold_rect_is_finite(r) == 1
-end
-
-################################################################################
-#### Utilities
-################################################################################
-function set_min_circular_angle(degrees::Cfloat)
-    CAPI.manifold_set_min_circular_angle(degrees)
-end
-
-function set_min_circular_edge_length(length::Cfloat)
-    CAPI.manifold_set_min_circular_edge_length(length)
-end
-
-function set_circular_segments(number::Cint)
-    CAPI.manifold_set_circular_segments(number)
-end
-
-function get_circular_segments(radius::Cfloat)::Cint
-    CAPI.manifold_get_circular_segments(radius)
 end

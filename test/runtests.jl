@@ -6,6 +6,7 @@ using StaticArrays
     m = MB.Manifold_empty()
     @test MB.num_tri(m) == 0
     @test MB.num_vert(m) == 0
+    @test MB.is_empty(m)
 end
 
 @testset "tetrahedron" begin
@@ -35,6 +36,14 @@ end
     b = MB.bounding_box(m)
     @test MB.box_min(b) == @SVector[-1.0, -1.0, -1.0]
     @test MB.box_max(b) == @SVector[1.0, 1.0, 1.0]
+    @test MB.genus(m) == 0
+    @test MB.is_empty(m) === false
+
+    m2 = MB.translate(m, 1,2,3)
+    @test MB.collect_vertices(m2) == map(x -> x .+ @SVector[1,2,3], MB.collect_vertices(m))
+
+    m3 = MB.scale(m, 1,2,3)
+    @test MB.collect_vertices(m3) == map(x -> x .* @SVector[1,2,3], MB.collect_vertices(m))
 end
 
 @testset "custom tetrahedron" begin
