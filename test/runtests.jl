@@ -100,6 +100,12 @@ end
     ]
 end
 
+@testset "sphere" begin
+    m = MB.Manifold_sphere(1.0, 10)
+    faces = MB.collect_triangles(m)
+    verts = MB.collect_vertices(m)
+end
+
 @testset "booleans" begin
     m = MB.Manifold_tetrahedron()
     res = MB.difference(m, m)
