@@ -105,7 +105,6 @@ end
 
 function get_meshgl(m::Manifold)::MeshGL
     @argcheck isalive(m)
-    # TODO confirm that gchandles are necessary
     mem = malloc_for(MeshGL)
     MeshGL(CAPI.manifold_get_meshgl(mem, m); gchandles = [m])
 end
