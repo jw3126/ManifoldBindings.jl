@@ -31,6 +31,10 @@ end
         @SVector[0x00000003, 0x00000004, 0x00000001], 
         @SVector[0x00000004, 0x00000003, 0x00000002]
        ]
+
+    b = MB.bounding_box(m)
+    @test MB.box_min(b) == @SVector[-1.0, -1.0, -1.0]
+    @test MB.box_max(b) == @SVector[1.0, 1.0, 1.0]
 end
 
 @testset "custom tetrahedron" begin
