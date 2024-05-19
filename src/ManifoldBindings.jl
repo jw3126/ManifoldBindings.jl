@@ -10,6 +10,8 @@ include("makie.jl")
 
 function __init__()
     path = "manifold/build/bindings/c/libmanifoldc.so"
+    # path= "/home/jan/products/lib/libmanifoldc.so"
+    @argcheck isfile(path)
     dlopen(path)
 end
 

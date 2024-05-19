@@ -2,6 +2,11 @@ import ManifoldBindings as MB
 using Test
 using StaticArrays
 
+@testset "empty" begin
+    m = MB.Manifold_empty()
+    @test MB.num_tri(m) == 0
+    @test MB.num_vert(m) == 0
+end
 
 @testset "tetrahedron" begin
     m = MB.Manifold_tetrahedron()
@@ -105,6 +110,7 @@ end
     faces = MB.collect_triangles(m)
     verts = MB.collect_vertices(m)
 end
+
 
 @testset "booleans" begin
     m = MB.Manifold_tetrahedron()

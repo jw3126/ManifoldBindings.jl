@@ -53,6 +53,11 @@ function Manifold_tetrahedron()::Manifold
     Manifold(CAPI.manifold_tetrahedron(mem))
 end
 
+function Manifold_empty()::Manifold
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_empty(mem))
+end
+
 function Manifold_cube(x, y, z, center::Bool)::Manifold
     mem = malloc_for(Manifold)
     Manifold(CAPI.manifold_cube(mem, x, y, z, center))
