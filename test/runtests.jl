@@ -54,7 +54,15 @@ end
     sprint(show, m)
     @test MB.num_tri(m) == 4
     @test MB.num_vert(m) == 4
-    @test MB.num_prop(m) == 3
+    @test MB.num_edge(m) == 6
     @test MB.collect_triangles(m) == faces
     @test MB.collect_vertices(m) == vertices
+
+    @test MB.isalive(m)
+    MB.delete(m)
+    @test !MB.isalive(m)
+    sprint(show, m)
+    @test_throws ArgumentError MB.num_vert(m)
+    MB.delete(m) # multi delete is fine
+    @test !MB.isalive(m)
 end

@@ -27,6 +27,26 @@ function isalive(obj)::Bool
     obj.ptr != C_NULL
 end
 
+function num_tri(m::Manifold)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_num_tri(m)
+end
+
+function num_prop(m::Manifold)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_num_prop(m)
+end
+
+function num_edge(m::Manifold)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_num_edge(m)
+end
+
+function num_vert(m::Manifold)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_num_vert(m)
+end
+
 function delete(m::Manifold)
     CAPI.manifold_delete_manifold(m)
     empty!(m.gchandles)
@@ -140,29 +160,19 @@ function Manifold(verts::AbstractVector, tris::AbstractVector)::Manifold
     Manifold(MeshGL(verts, tris))
 end
 
-function resolve_meshgl(mgl::MeshGL)::MeshGL
-    mgl
-end
-function resolve_meshgl(m::Manifold)::MeshGL
-    get_meshgl(m)
+function num_vert(m::MeshGL)::Cint
+    @argcheck isalive(m)
+    CAPI.manifold_meshgl_num_vert(m)
 end
 
-function num_vert(m::Union{MeshGL, Manifold})::Cint
+function num_tri(m::MeshGL)::Cint
     @argcheck isalive(m)
-    mgl = resolve_meshgl(m)
-    CAPI.manifold_meshgl_num_vert(mgl)
+    CAPI.manifold_meshgl_num_tri(m)
 end
 
-function num_tri(m::Union{MeshGL, Manifold})::Cint
+function num_prop(m::MeshGL)::Cint
     @argcheck isalive(m)
-    mgl = resolve_meshgl(m)
-    CAPI.manifold_meshgl_num_tri(mgl)
-end
-
-function num_prop(m::Union{MeshGL, Manifold})::Cint
-    @argcheck isalive(m)
-    mgl = resolve_meshgl(m)
-    CAPI.manifold_meshgl_num_prop(mgl)
+    CAPI.manifold_meshgl_num_prop(m)
 end
 
 function vert_properties_length(m::MeshGL)::Cint
