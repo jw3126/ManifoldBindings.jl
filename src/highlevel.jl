@@ -58,7 +58,7 @@ end
 
 
 #################################################################################
-#### ManifoldMeshGL
+#### MeshGL
 ################################################################################
 
 mutable struct MeshGL
@@ -98,12 +98,32 @@ function Base.copy(m::MeshGL)::MeshGL
     MeshGL(CAPI.manifold_meshgl_copy(mem, m))
 end
 
-function ManifoldMeshGL_create(vert_props::AbstractVector{Float32}, tri_verts::AbstractVector{UInt32}, n_verts)::MeshGL
+function MeshGL_create(vert_props::AbstractVector{Float32}, tri_verts::AbstractVector{UInt32}, n_verts)::MeshGL
     @argcheck n_verts*3 <= length(vert_props)
     mem = malloc_for(MeshGL)
     n_props = length(vert_props)
     n_tris = length(tri_verts)
     MeshGL(CAPI.manifold_meshgl(mem, vert_props, n_verts, n_props, tri_verts, n_tris))
+end
+
+function MeshGL(vertices::AbstractVector, triangles::AbstractVector)::MeshGL
+    vert_props = Float32[]
+    tri_verts = UInt32[]
+    for v in vertices
+        @check length(v) == 3
+        x,y,z = v
+        push!(vert_props, x, y, z)
+    end
+    i0 = firstindex(vertices)
+    for t in triangles
+        @check length(t) == 3
+        i1,i2,i3 = t
+        @check i1 in eachindex(vertices) 
+        @check i2 in eachindex(vertices) 
+        @check i3 in eachindex(vertices)
+        push!(tri_verts, i1-i0,i2-i0,i3-i0) # convert to zero based indexing
+    end
+    MeshGL_create(vert_props, tri_verts, length(vertices))
 end
 
 function num_vert(m::MeshGL)::Cint
