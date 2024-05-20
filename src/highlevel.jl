@@ -115,6 +115,31 @@ function boolean(a::Manifold, b::Manifold, op)::Manifold
     Manifold(CAPI.manifold_boolean(mem, a, b, op))
 end
 
+function with_manifold_vec(f, manifolds)
+    # we don't want to create a high level wrapper for ManifoldManifoldVec
+    # it easily leads to memory bugs
+    mem = Libc.malloc(CAPI.manifold_manifold_vec_size())
+    vec = CAPI.manifold_manifold_empty_vec(mem)
+    try
+        for m in manifolds
+            @argcheck isalive(m)
+            CAPI.manifold_manifold_vec_push_back(vec, m)
+        end
+        return f(vec)
+    finally
+        CAPI.manifold_delete_manifold_vec(vec)
+    end
+end
+
+function batch_boolean(manifolds, op)::Manifold
+    op = convert(CAPI.ManifoldOpType, op)
+    ptr = with_manifold_vec(manifolds) do vec
+        mem = malloc_for(Manifold)
+        CAPI.manifold_batch_boolean(mem, vec, op)
+    end
+    Manifold(ptr)
+end
+
 function translate(m::Manifold, x::Real, y::Real, z::Real)::Manifold
     @argcheck isalive(m)
     mem = malloc_for(Manifold)
