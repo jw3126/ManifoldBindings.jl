@@ -94,6 +94,27 @@ function intersection(a::Manifold, b::Manifold)::Manifold
     Manifold(CAPI.manifold_intersection(mem, a, b))
 end
 
+function Base.convert(::Type{CAPI.ManifoldOpType}, s::Symbol)::CAPI.ManifoldOpType
+    @argcheck s in (:add, :subtract, :intersect)
+    if s === :add
+        CAPI.MANIFOLD_ADD
+    elseif s === :subtract
+        CAPI.MANIFOLD_SUBTRACT
+    elseif s === :intersect
+        CAPI.MANIFOLD_INTERSECT
+    else
+        error("Unreachable")
+    end
+end
+
+function boolean(a::Manifold, b::Manifold, op)::Manifold
+    op = convert(CAPI.ManifoldOpType, op)
+    @argcheck isalive(a)
+    @argcheck isalive(b)
+    mem = malloc_for(Manifold)
+    Manifold(CAPI.manifold_boolean(mem, a, b, op))
+end
+
 function translate(m::Manifold, x::Real, y::Real, z::Real)::Manifold
     @argcheck isalive(m)
     mem = malloc_for(Manifold)

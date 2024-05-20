@@ -133,11 +133,23 @@ end
     @test MB.num_tri(res) == 0
     @test MB.num_vert(res) == 0
 
+    res = MB.boolean(m, m, :subtract)
+    @test MB.num_tri(res) == 0
+    @test MB.num_vert(res) == 0
+
     res = MB.intersection(m, m)
     @test MB.num_tri(res) == MB.num_tri(m)
     @test MB.num_vert(res) == MB.num_vert(m)
 
+    res = MB.boolean(m, m, :intersect)
+    @test MB.num_tri(res) == MB.num_tri(m)
+    @test MB.num_vert(res) == MB.num_vert(m)
+
     res = MB.union(m, m)
+    @test MB.num_tri(res) == MB.num_tri(m)
+    @test MB.num_vert(res) == MB.num_vert(m)
+
+    res = MB.boolean(m, m, :add)
     @test MB.num_tri(res) == MB.num_tri(m)
     @test MB.num_vert(res) == MB.num_vert(m)
 end
