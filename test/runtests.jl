@@ -100,6 +100,8 @@ end
      @SVector[0.5  , 1.0  , -1.5 ],
      @SVector[0.5  , 1.0  , 1.5  ],
     ]
+    @test MB.volume(m) ≈ 1*2*3
+    @test MB.surface_area(m) ≈ 2*(1*2 + 2*3 + 1*3)
     @test length(MB.collect_vertices(m)) == 8
     @test length(MB.collect_triangles(m)) == 12
     @test MB.collect_triangles(m) == [

@@ -158,6 +158,10 @@ function precision(m::Manifold)::Cfloat
     CAPI.manifold_precision(m)
 end
 
+function warp(f, m::Manifold)::Manifold
+
+end
+
 function genus(m::Manifold)::Cint
     @argcheck isalive(m)
     CAPI.manifold_genus(m)
@@ -380,14 +384,17 @@ end
 ################################################################################
 #### Manifold Properties
 ################################################################################
-function surface_area(m::Manifold)::Cfloat
+function surface_area_and_volume(m::Manifold)::@NamedTuple{surface_area::Cfloat, volume::Cfloat}
     @argcheck isalive(m)
-    CAPI.manifold_get_properties(m).surface_area
+    (;surface_area, volume) = CAPI.manifold_get_properties(m)
+    (;surface_area, volume)
+end
+function surface_area(m::Manifold)::Cfloat
+    surface_area_and_volume(m).surface_area
 end
 
 function volume(m::Manifold)::Cfloat
-    @argcheck isalive(m)
-    CAPI.manifold_get_properties(m).volume
+    surface_area_and_volume(m).volume
 end
 
 ################################################################################
