@@ -17,7 +17,7 @@ ArgCheck = "2.3.0"
 CEnum    = "0.5.0"
 MakieCore = "0.8.1"
 StaticArrays  = "1.9.4"
-manifold_jll = "2.4.5+0"
+manifold_jll = "2.4.5"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
