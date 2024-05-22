@@ -3,10 +3,10 @@
 [![Build Status](https://github.com/jw3126/ManifoldBindings.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jw3126/ManifoldBindings.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/jw3126/ManifoldBindings.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/jw3126/ManifoldBindings.jl)
 
-This package provides inofficial julia bindings for [manifold](https://github.com/elalish/manifold).
+This package provides inofficial julia bindings for [manifold](https://github.com/elalish/manifold) a fast and robust mesh library.
 It provides low level 1:1 bindings around the official C-API in `JuliaBindings.CAPI` and
 also a memory safe high level api. The high level API is not yet fully implemented 
-and subject to change.
+and might change in future.
 
 # Usage
 ```julia
