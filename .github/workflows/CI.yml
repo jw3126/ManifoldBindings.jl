@@ -24,10 +24,10 @@ jobs:
       matrix:
         version:
           - '1.10'
-          - '1.6'
           - 'nightly'
         os:
           - ubuntu-latest
+          - windows
         arch:
           - x64
     steps:
