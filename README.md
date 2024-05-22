@@ -41,4 +41,4 @@ m = MB.difference(tetrahedron, sphere)
 using GLMakie
 plot(m)
 ```
-[![difference.png]](resources/difference.png)]
+[![difference.png]](resources/difference.png)
