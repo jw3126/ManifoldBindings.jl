@@ -85,6 +85,12 @@ end
     @test !MB.isalive(m)
 end
 
+@testset "warp" begin
+    m = MB.Manifold_tetrahedron()
+    m2 = MB.warp(x->0.1x, m)
+    @test MB.collect_vertices(m2) ≈ 0.1*MB.collect_vertices(m)
+end
+
 @testset "cube" begin
     center=true
     m = MB.Manifold_cube(1,2,3, center)

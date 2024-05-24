@@ -122,6 +122,7 @@ function with_manifold_vec(f, manifolds)
     vec = CAPI.manifold_manifold_empty_vec(mem)
     try
         for m in manifolds
+            @argcheck m isa Manifold
             @argcheck isalive(m)
             CAPI.manifold_manifold_vec_push_back(vec, m)
         end
@@ -204,8 +205,21 @@ function precision(m::Manifold)::Cfloat
     CAPI.manifold_precision(m)
 end
 
-function warp(f, m::Manifold)::Manifold
+struct Closure{F}
+    f::F
+end
 
+function (f::Closure)(x::Cfloat, y::Cfloat, z::Cfloat, _::Ptr{Cvoid})::CAPI.ManifoldVec3
+    pt = @SVector [x, y, z]
+    f.f(pt)
+end
+
+function warp(f, m::Manifold)::Manifold
+    cfun = @cfunction($(Closure(f)), CAPI.ManifoldVec3, (Cfloat, Cfloat, Cfloat, Ptr{Cvoid}))
+    mem = malloc_for(Manifold)
+    ctx = C_NULL
+    ptr = CAPI.manifold_warp(mem, m, cfun, ctx)
+    Manifold(ptr)
 end
 
 function genus(m::Manifold)::Cint
