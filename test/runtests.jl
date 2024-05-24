@@ -180,7 +180,7 @@ end
 
 @testset "compose, decompose" begin
     m1 = MB.Manifold_tetrahedron()
-    m2 = MB.warp(x -> x + [0,0,3], tetrahedron)
+    m2 = MB.warp(x -> x + [0,0,3], m1)
     m12 = MB.compose([m1, m2])
 
     ms = MB.decompose(m12)
