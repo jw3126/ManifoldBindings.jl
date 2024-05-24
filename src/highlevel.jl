@@ -205,17 +205,17 @@ function precision(m::Manifold)::Cfloat
     CAPI.manifold_precision(m)
 end
 
-struct Closure{F}
+struct WarpWrapper{F}
     f::F
 end
 
-function (f::Closure)(x::Cfloat, y::Cfloat, z::Cfloat, _::Ptr{Cvoid})::CAPI.ManifoldVec3
+function (f::WarpWrapper)(x::Cfloat, y::Cfloat, z::Cfloat, _::Ptr{Cvoid})::CAPI.ManifoldVec3
     pt = @SVector [x, y, z]
     f.f(pt)
 end
 
 function warp(f, m::Manifold)::Manifold
-    cfun = @cfunction($(Closure(f)), CAPI.ManifoldVec3, (Cfloat, Cfloat, Cfloat, Ptr{Cvoid}))
+    cfun = @cfunction($(WarpWrapper(f)), CAPI.ManifoldVec3, (Cfloat, Cfloat, Cfloat, Ptr{Cvoid}))
     mem = malloc_for(Manifold)
     ctx = C_NULL
     ptr = CAPI.manifold_warp(mem, m, cfun, ctx)
