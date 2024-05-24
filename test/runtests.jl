@@ -177,3 +177,17 @@ end
     mgl = MB.MeshGL(vertices, faces)
     @test_throws MB.ManifoldException MB.Manifold(mgl)
 end
+
+@testset "compose, decompose" begin
+    m1 = MB.Manifold_tetrahedron()
+    m2 = MB.warp(x -> x + [0,0,3], tetrahedron)
+    m12 = MB.compose([m1, m2])
+
+    ms = MB.decompose(m12)
+    @test length(ms) == 2
+    @test MB.num_vert(ms[1]) == 4
+    @test MB.num_tri(ms[1]) == 4
+
+    @test MB.num_vert(ms[2]) == 4
+    @test MB.num_tri(ms[2]) == 4
+end

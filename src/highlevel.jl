@@ -115,6 +115,36 @@ function boolean(a::Manifold, b::Manifold, op)::Manifold
     Manifold(CAPI.manifold_boolean(mem, a, b, op))
 end
 
+function compose(manifolds)::Manifold
+    with_manifold_vec(manifolds) do vec
+        mem = malloc_for(Manifold)
+        Manifold(CAPI.manifold_compose(mem, vec))
+    end
+end
+
+function unsafe_vector(vec::Ptr{CAPI.ManifoldManifoldVec})::Vector{Manifold}
+    # this is unsafe because it takes ownership of the manifolds in the ManifoldManifoldVec
+    # So it is easy to create memory corruption.
+    # For instance calling this twice on the same ManifoldManifoldVec will lead to double free
+    len = CAPI.manifold_manifold_vec_length(vec)
+    ret = Vector{Manifold}(undef, len)
+    for i in 1:len
+        mem = malloc_for(Manifold)
+        ptr = CAPI.manifold_manifold_vec_get(mem, vec, i - 1)
+        ret[i] = Manifold(ptr)
+    end
+    return ret
+end
+
+function decompose(m::Manifold)::Vector{Manifold}
+    @argcheck isalive(m)
+    mem = Libc.malloc(CAPI.manifold_manifold_vec_size())
+    vec = CAPI.manifold_decompose(mem, m)
+    ret = unsafe_vector(vec)
+    CAPI.manifold_delete_manifold_vec(vec)
+    ret
+end
+
 function with_manifold_vec(f, manifolds)
     # we don't want to create a high level wrapper for ManifoldManifoldVec
     # it easily leads to memory bugs
