@@ -10,7 +10,6 @@ and might change in future.
 
 # Usage
 ```julia
-using GLMakie
 using StaticArrays
 import ManifoldBindings as MB
 
@@ -26,13 +25,17 @@ vertices = [
     @SVector[1.0, -1.0, -1.0],
     @SVector[1.0, 1.0, 1.0],
 ]
-faces = [
+triangles = [
     @SVector[0x00000003, 0x00000001, 0x00000002], 
     @SVector[0x00000001, 0x00000004, 0x00000002], 
     @SVector[0x00000003, 0x00000004, 0x00000001], 
     @SVector[0x00000004, 0x00000003, 0x00000002]
    ]
-tetrahedron = MB.Manifold(vertices, faces) # a custom tetrahedron
+tetrahedron = MB.Manifold(vertices, triangles) # a custom tetrahedron
+
+# get information out of a manifold
+@assert MB.collect_vertices(tetrahedron)  == vertices
+@assert MB.collect_triangles(tetrahedron) == triangles
 
 # use a mesh boolean
 m = MB.difference(tetrahedron, sphere)
