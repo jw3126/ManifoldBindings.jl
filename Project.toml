@@ -1,7 +1,7 @@
 name = "ManifoldBindings"
 uuid = "6347b20d-ab3f-4582-b354-87a116902036"
 authors = ["Jan Weidner <jw3126@gmail.com> and contributors"]
-version = "0.1"
+version = "0.1.1"
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
