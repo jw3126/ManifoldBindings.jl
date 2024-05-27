@@ -308,9 +308,13 @@ function Base.copy(m::MeshGL)::MeshGL
 end
 
 function MeshGL_create(vert_props::Vector{Float32}, tri_verts::Vector{UInt32}, n_verts)::MeshGL
-    @argcheck n_verts*3 <= length(vert_props)
+    @argcheck 0 <= n_verts*3 <= length(vert_props)
     mem = malloc_for(MeshGL)
-    n_props = Int(length(vert_props) / n_verts)
+    n_props::Int = if iszero(n_verts)
+        3
+    else
+        Int(length(vert_props) / n_verts)
+    end
     n_tris = Int(length(tri_verts) / 3)
     ptr = CAPI.manifold_meshgl(mem, vert_props, n_verts, n_props, tri_verts, n_tris)
     MeshGL(ptr; gchandles = [vert_props, tri_verts])

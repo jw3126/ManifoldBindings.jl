@@ -191,3 +191,12 @@ end
     @test MB.num_vert(ms[2]) == 4
     @test MB.num_tri(ms[2]) == 4
 end
+
+@testset "custom empty manifold" begin
+    vertices = []
+    faces = []
+    m = MB.Manifold(vertices, faces)
+    @test MB.num_tri(m) == 0
+    @test MB.num_vert(m) == 0
+    @test MB.is_empty(m)
+end
